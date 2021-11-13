@@ -4,10 +4,11 @@
 # - receives a single reduced term and executes.
 
 from lcparser import Parser
-#from lcreducer import Reducer
+from lcreducer import Reducer
 import sys
 
 lcfile = sys.argv[1]
+verbosemode = False
 if len(sys.argv) > 2:
     verbosemode = sys.argv[2] == 'True'
 
@@ -19,8 +20,7 @@ with open(lcfile, 'r') as f:
 
 p = Parser(lctxt)
 tree = p.get_parsed()
-print(tree)
-#r = Reducer(tree)
-#term = r.get_reduced()
+r = Reducer(tree, verbosemode)
+term = r.get_reduced()
 
-#print(term)
+print(term)

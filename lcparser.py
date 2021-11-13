@@ -55,16 +55,13 @@ class Parser:
             self.eat_tokens(1)
             return ['AP', ['VA', v], self.parse_line()]
 
-    def parse_full(self):
-        if self.tokens[1] == ':=':  # assumes "var := expn;" syntax
-            while self.tokens:
-                v = self.tokens[0]
-                self.eat_tokens(2)
-                e = self.parse_line()  # expn
-                self.tree.append(['LM', v, e])
-                self.trim_line()
-        else:
-            self.tree = self.parse_line()  # allows parsing of single line expressions w/out ":=" assignment
+    def parse_full(self):  # assumes "var := expn;" syntax
+        while self.tokens:
+            v = self.tokens[0]
+            self.eat_tokens(2)
+            e = self.parse_line()  # expn
+            self.tree.append(['LM', v, e])
+            self.trim_line()
 
     def get_parsed(self):
         return self.tree
