@@ -10,7 +10,7 @@ import sys
 lcfile = sys.argv[1]
 verbosemode = False
 if len(sys.argv) > 2:
-    verbosemode = sys.argv[2] == 'True'
+    verbosemode = sys.argv[2].lower() == 'true'
 
 with open(lcfile, 'r') as f:
     lines = f.readlines()
