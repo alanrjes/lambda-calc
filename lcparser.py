@@ -35,6 +35,9 @@ class Parser:
         if self.tokens[0] == '(':
             self.eat_tokens(1)
             e = self.parse_line()
+            if self.tokens and self.tokens[0] not in [';', ')']:
+                e2 = self.parse_line()
+                return ['AP', e, e2]
             return e
         # fn x =>, LM
         elif self.tokens[0] == 'fn':  # assumes tokens[2] is '=>'
@@ -58,9 +61,6 @@ class Parser:
                 v = self.tokens[0]
                 self.eat_tokens(2)
                 e = self.parse_line()  # expn
-                if self.tokens and self.tokens[0] != ';':  # to account for bug w/ full-line AP's
-                    e2 = self.parse_line()
-                    e = ['AP', e, e2]
                 self.tree.append(['LM', v, e])
                 self.trim_line()
         else:
