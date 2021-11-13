@@ -19,6 +19,7 @@ with open(lcfile, 'r') as f:
 
 p = Parser(lctxt)
 tree = p.get_parsed()
+print(tree)
 #r = Reducer(tree)
 #term = r.get_reduced()
 
