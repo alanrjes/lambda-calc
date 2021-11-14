@@ -13,23 +13,25 @@ class Reducer:
     def __init__(self, tree, verbosemode):
         self.verbosemode = verbosemode
         self.varnames = gen_vars()
+        self.varkeys = {'main':'main'}
         self.rtree = []
         for branch in tree:  # get renamed version of the tree w/ unique vars
-            self.rtree.append(self.rename(branch))
-        self.rlib = {}
-        self.redterm = self.reduce()
+            rbranch = self.rename(branch)
+            self.rtree.append(rbranch)
+        self.redterm = self.reduce()  # substitute & evaluate; normal-order beta reduction
 
     def vprint(self, t):
         if self.verbosemode:
             print(t)
 
     def rename(self, term, lvars={}):  # alpha-renaming step
-        if term[0] == 'LM':
+        if term[0] in ['LM', 'EQ']:
             v = term[1]
             if v == 'main':  # preserve 'main' var name
                 vp = 'main'
             else:
                 vp = self.varnames.pop(0)
+                self.varkeys[vp] = v  # save key to change back at the end
                 lvars[v] = vp
             e = self.rename(term[2], lvars)
             return ['LM', vp, e]
@@ -39,6 +41,7 @@ class Reducer:
                 vp = lvars[v]
             else:
                 vp = self.varnames.pop(0)
+                self.varkeys[vp] = v
                 lvars[v] = vp
             return ['VA', vp]
         elif term[0] == 'AP':
@@ -46,33 +49,52 @@ class Reducer:
             e2 = self.rename(term[2], lvars)
             return ['AP', e1, e2]
 
-    def substitute(self, term):  # substitution step of beta-reduction
+    def sub_eqs(self, term, gvars):  # substitute ":="-level variables
         if term[0] == 'LM':
-            v = term[1]
-            e = self.substitute(term[2])
-            self.rlib[v] = e
-            return ['LM', v, e]
+            e = term[2]
+            ep = self.sub_eqs(e, gvars)
+            return ['LM', term[1], ep]
         elif term[0] == 'VA':
             v = term[1]
-            if v in self.rlib:
-                return self.rlib[v]
+            if v in gvars:
+                sv = gvars[v]
+                return self.sub_eqs(sv, gvars)
             else:
-                return term  # recursion base case
+                return term
         elif term[0] == 'AP':
-            e1 = self.substitute(term[1])
-            e2 = self.substitute(term[2])
-            return ['AP', e1, e2]
+            e1 = term[1]
+            e2 = term[2]
+            ep1 = self.sub_eqs(e1, gvars)
+            ep2 = self.sub_eqs(e2, gvars)
+            return ['AP', ep1, ep2]
 
-    def eval_sub(self, term, v, e=None):  # replaces all v in term with e to evaluate and LM
+    def eval_lms(self, term):  # substitute/evaluate lambdas using normal order reduction
+        if term[0] == 'AP':
+            if term[1][0] == 'LM':
+                v = term[1][1]  # eg. AP[LM(x, (x y)), VA(y)] -> (y y), where v=x, arg=y, fun=(x y)
+                arg = term[2]
+                fun = term[1][2]
+                self.vprint('Evaluated lambda '+str(v)+' with arg '+str(arg)+'\n')
+                return self.eval_sub(fun, v, arg), True  # bool flag to indicate a reduction was made
+            else:
+                ep1, f1 = self.eval_lms(term[1])
+                ep2, f2 = self.eval_lms(term[2])
+                return ['AP', ep1, ep2], (f1 or f2)
+        elif term[0] == 'VA':
+            return term, False  # recursion base case
+        elif term[0] == 'LM':
+            v = term[1]
+            e = term[2]
+            ep, f = self.eval_lms(e)
+            return ['LM', v, ep], f
+
+    def eval_sub(self, term, v, e):  # replaces all occurances of v in the term with e
         if term[0] == 'LM':
             ep = self.eval_sub(term[2], v, e)
             return ['LM', term[1], ep]
         elif term[0] == 'VA':
             if term[1] == v:
-                if e:
-                    return e
-                else:
-                    raise ValueError()
+                return e
             else:
                 return term
         elif term[0] == 'AP':
@@ -80,37 +102,17 @@ class Reducer:
             ep2 = self.eval_sub(term[2], v, e)
             return ['AP', ep1, ep2]
 
-    def evaluate(self, term):  # normal order evaluation step of beta-reduction
-        if term[0] == 'AP':
-            if term[1][0] == 'LM':
-                v = term[1][1]  # eg. AP[LM(x, (x y)), VA(y)] -> (y y), where v=x, arg=y, fun=(x y)
-                arg = term[2]
-                fun = term[1][2]
-                self.vprint('Evaluated lambda '+str(v)+' with '+str(arg)+'\n')
-                return self.eval_sub(fun, v, arg)
-            else:
-                ep1 = self.evaluate(term[1])
-                ep2 = self.evaluate(term[2])
-                return ['AP', ep1, ep2]
-        elif term[0] == 'VA':
-            return term  # recursion base case
-        elif term[0] == 'LM':
-            v = term[1]
-            e = term[2]
-            return ['LM', v, self.evaluate(e)]
-
     def reduce(self):
-        self.vprint('Renamed form: '+str(self.rtree)+'\n')
-        for rbranch in self.rtree:
-            sbranch = self.substitute(rbranch)
-        subdterm =  self.rlib['main']
-        self.vprint('Substituted form of main: '+str(subdterm)+'\n')
-        t1 = []
-        t2 = subdterm
-        while t1 != t2:
-            t1 = t2
-            t2 = self.evaluate(t2)
-        return t2
+        gvars = {}
+        for branch in self.rtree:  # all EQ terms (lines)
+            v = branch[1]
+            e = branch[2]
+            gvars[v] = e
+        main = self.sub_eqs(gvars['main'], gvars)
+        flag = True
+        while flag:
+            main, flag = self.eval_lms(main)
+        return main
 
     def get_reduced(self):
         return self.redterm

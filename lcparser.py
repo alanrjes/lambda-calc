@@ -60,7 +60,7 @@ class Parser:
             v = self.tokens[0]
             self.eat_tokens(2)
             e = self.parse_line()  # expn
-            self.tree.append(['LM', v, e])
+            self.tree.append(['EQ', v, e])  # "EQ" for ":=" syntax
             self.trim_line()
 
     def get_parsed(self):

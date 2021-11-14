@@ -4,7 +4,7 @@
 # - receives a single reduced term and executes.
 
 from lcparser import Parser
-from lcreducer import Reducer
+from lcreducerREDO import Reducer
 import sys
 
 lcfile = sys.argv[1]
