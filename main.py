@@ -18,6 +18,12 @@ with open(lcfile, 'r') as f:
     for line in lines:
         lctxt += line.replace('\n', ' ')
 
+if verbosemode:
+    print('Started with:')
+    for line in lines:
+        print(line.replace('\n', ''))
+    print()
+
 p = Parser(lctxt)
 tree = p.get_parsed()
 r = Reducer(tree, verbosemode)

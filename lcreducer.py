@@ -20,9 +20,11 @@ class Reducer:
             self.rtree.append(rbranch)
         self.redterm = self.reduce()  # substitute & evaluate; normal-order beta reduction
 
-    def vprint(self, t):
+    def vprint(self, v, a):
         if self.verbosemode:
-            print(t)
+            vp = self.varkeys[v]
+            ap = self.restore(a)
+            print('Evaluated lambda '+vp+' with arg '+ap+' to get:')
 
     def rename(self, term, lvars={}):  # alpha-renaming step
         if term[0] in ['LM', 'EQ']:
@@ -74,7 +76,7 @@ class Reducer:
                 v = term[1][1]  # eg. AP[LM(x, (x y)), VA(y)] -> (y y), where v=x, arg=y, fun=(x y)
                 arg = term[2]
                 fun = term[1][2]
-                self.vprint('Evaluated lambda '+str(v)+' with arg '+str(arg)+'\n')
+                self.vprint(v, arg)
                 return self.eval_sub(fun, v, arg), True  # bool flag to indicate a reduction was made
             else:
                 ep1, f1 = self.eval_lms(term[1])
@@ -109,9 +111,15 @@ class Reducer:
             e = branch[2]
             gvars[v] = e
         main = self.sub_eqs(gvars['main'], gvars)
+        if self.verbosemode:
+            lmmain = self.restore(main)
+            print('Substituted to:\n'+lmmain+'\n')
         flag = True
         while flag:
             main, flag = self.eval_lms(main)
+            if self.verbosemode:
+                lmmain = self.restore(main)
+                print(lmmain+'\n')
         return main
 
     def restore(self, term):
