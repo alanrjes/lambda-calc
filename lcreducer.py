@@ -1,4 +1,4 @@
-# Receives a list-tree of lc terms and reduces them to a simplified lc term.
+# Receives a list-tree of lc terms and reduces them, then translates back to lc and returns a simplified lc term.
 
 import string
 
@@ -114,5 +114,25 @@ class Reducer:
             main, flag = self.eval_lms(main)
         return main
 
-    def get_reduced(self):
-        return self.redterm
+    def restore(self, term):
+        if term[0] == 'LM':
+            v = term[1]
+            e = term[2]
+            vp = self.varkeys[v]
+            es = self.restore(e)
+            return 'fn '+vp+' => '+es
+        elif term[0] == 'VA':
+            v = term[1]
+            vp = self.varkeys[v]
+            return vp
+        elif term[0] == 'AP':
+            e1 = term[1]
+            e2 = term[2]
+            es1 = self.restore(e1)
+            es2 = self.restore(e2)
+            return '('+es1+' '+es2+')'
+
+    def get_reduced_lc(self):  # translates the reduced term back into lc syntax and restores variable names
+        term = self.redterm
+        lc = self.restore(term)
+        return lc

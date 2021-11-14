@@ -1,10 +1,10 @@
 # Handles overhead to put together the parser and reducer:
-# - reads from a .lc file and hands the text to a parser,
-# - receives the parsed terms and hands them to the reducer, then
-# - receives a single reduced term and executes.
+# - reads from a lc file and hands the text to a parser,
+# - receives the parsed terms as a list-tree and hands them to the reducer, then
+# - receives a single reduced lc term.
 
 from lcparser import Parser
-from lcreducerREDO import Reducer
+from lcreducer import Reducer
 import sys
 
 lcfile = sys.argv[1]
@@ -21,6 +21,6 @@ with open(lcfile, 'r') as f:
 p = Parser(lctxt)
 tree = p.get_parsed()
 r = Reducer(tree, verbosemode)
-term = r.get_reduced()
+term = r.get_reduced_lc()
 
 print(term)
