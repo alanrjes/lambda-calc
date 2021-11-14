@@ -83,10 +83,11 @@ class Reducer:
     def evaluate(self, term):  # normal order evaluation step of beta-reduction
         if term[0] == 'AP':
             if term[1][0] == 'LM':
-                v = term[1][1]  # eg. AP[LM(x, (x y)), VA(y)] -> (y y), where v=x, e=y, t = (x y)
-                einpt = term[2]
-                eenv = term[1][2]
-                return self.eval_sub(eenv, v, einpt)
+                v = term[1][1]  # eg. AP[LM(x, (x y)), VA(y)] -> (y y), where v=x, arg=y, fun=(x y)
+                arg = term[2]
+                fun = term[1][2]
+                self.vprint('Evaluated lambda '+str(v)+' with '+str(arg)+'\n')
+                return self.eval_sub(fun, v, arg)
             else:
                 ep1 = self.evaluate(term[1])
                 ep2 = self.evaluate(term[2])
@@ -96,17 +97,14 @@ class Reducer:
         elif term[0] == 'LM':
             v = term[1]
             e = term[2]
-            try:
-                return self.eval_sub(e, v)  # try to evaluate with no e to see if it's not needed
-            except ValueError:  # outer lamda can't be reduced, so reduce next
-                return ['LM', v, self.evaluate(e)]
+            return ['LM', v, self.evaluate(e)]
 
     def reduce(self):
-        self.vprint('Renamed form: '+str(self.rtree))
+        self.vprint('Renamed form: '+str(self.rtree)+'\n')
         for rbranch in self.rtree:
             sbranch = self.substitute(rbranch)
         subdterm =  self.rlib['main']
-        self.vprint('Substituted form: '+str(subdterm))
+        self.vprint('Substituted form of main: '+str(subdterm)+'\n')
         t1 = []
         t2 = subdterm
         while t1 != t2:
