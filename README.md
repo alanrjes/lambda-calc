@@ -13,4 +13,6 @@
 
 *reducer.py* receives a list-tree of lc terms and reduces them to a simplified lc term. The Reducer class first renames all variables using alpha-renaming (limited to 260 variables). Then it reduces the term; first at the line-level with variables defined by ":=", and then using normal-order beta reduction to evaluate lambda terms. If in "verbose" mode, these reduction are printed out. The reduced term can then be translated back into lc with restored variable names, and accessed with the *get_reduced_lc* method.
 
+**Bug Notes** : Through testing arithmetic with church numerals, it doesn't seem to produce correct results. I haven't been able to figure out what exactly is causing this, because I get the same (incorrect) results as this program when I solve the expressions by hand. In conclusion; it's not accurate, but it is consistent. For whatever mistake I'm making when reducing lambda calculus expressions by hand, the Parser/Reducer is consistently producing the same mistake.
+
 **Authors** : Alan Jessup

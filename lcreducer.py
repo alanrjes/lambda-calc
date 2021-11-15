@@ -79,9 +79,13 @@ class Reducer:
                 self.vprint(v, arg)
                 return self.eval_sub(fun, v, arg), True  # bool flag to indicate a reduction was made
             else:
+                e1, e2 = term[1], term[2]
                 ep1, f1 = self.eval_lms(term[1])
-                ep2, f2 = self.eval_lms(term[2])
-                return ['AP', ep1, ep2], (f1 or f2)
+                if f1:
+                    return ['AP', ep1, e2 ], True
+                else:
+                    ep2, f2 = self.eval_lms(term[2])
+                return ['AP', e1, ep2], f2
         elif term[0] == 'VA':
             return term, False  # recursion base case
         elif term[0] == 'LM':
@@ -111,15 +115,14 @@ class Reducer:
             e = branch[2]
             gvars[v] = e
         main = self.sub_eqs(gvars['main'], gvars)
-        if self.verbosemode:
-            lmmain = self.restore(main)
-            print('Substituted to:\n'+lmmain+'\n')
         flag = True
+        if self.verbosemode:
+            print('Substituted to:')
         while flag:
-            main, flag = self.eval_lms(main)
             if self.verbosemode:
                 lmmain = self.restore(main)
                 print(lmmain+'\n')
+            main, flag = self.eval_lms(main)
         return main
 
     def restore(self, term):
